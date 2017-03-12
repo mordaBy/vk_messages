@@ -5,6 +5,7 @@
 
 import configparser as cp
 import vk
+from vk.exceptions import VkAPIError
 from time import sleep
 import datetime
 
@@ -36,45 +37,50 @@ def do_fwd(forwarded, iter_count=1):
         if 'fwd_messages' in fwd:
             do_fwd(fwd['fwd_messages'], iter_count)
 
-
 my_user = api.users.get()
 my_user_id = my_user[0]['id']
 my_user_name = my_user[0]['first_name'] + ' ' + my_user[0]['last_name']
 
-dialogs = api.execute.getNamedDialogs()
-for idx, dialog in enumerate(dialogs):
-    print("[%2d] %s %s Message: %s " % (idx + 1,
-                                        dialog['first_name'],
-                                        dialog['last_name'],
-                                        dialog['body']))
+try:
+    dialogs = api.execute.getNamedDialogs()
+    for idx, dialog in enumerate(dialogs):
+        print("[%2d] %s %s Message: %s " % (idx + 1,
+                                            dialog['first_name'],
+                                            dialog['last_name'],
+                                            dialog['body']))
 
-user_n = int(input("Enter the dialog number: ")) - 1
-user_id = dialogs[user_n]['user_id']
-user_name = " ".join([dialogs[user_n]['first_name'] + ' ' + dialogs[user_n]['last_name']])
+    user_n = int(input("Enter the dialog number: ")) - 1
+    user_id = dialogs[user_n]['user_id']
+    user_name = " ".join([dialogs[user_n]['first_name'] + ' ' + dialogs[user_n]['last_name']])
 
-mes_offset = 0
-mes_count = api.messages.getHistory(user_id=user_id, count=0)['count']
-while mes_offset <= mes_count:
-    history = api.messages.getHistory(user_id=user_id, count=200, offset=mes_offset)['items']
-    for message in history:
-        print("[%s] " % (datetime.datetime.fromtimestamp(message['date'])).strftime('%Y-%m-%d %H:%M:%S'), end='')
-        if message['from_id'] == my_user_id:
-            print('%s: %s' % (my_user_name, message['body']))
-        else:
-            print('%s: %s' % (user_name, message['body']))
-        if 'attachments' in message:
-            for att in message['attachments']:
-                if att['type'] == 'sticker':
-                    print('Attachment sticker: %d' % att['sticker']['product_id'])
-                if att['type'] == 'photo':
-                    print('Attachment photo: ')
-                    for key in att['photo']:
-                        if 'photo' in key:
-                            print(key, att['photo'][key])
+    mes_offset = 0
+    mes_count = api.messages.getHistory(user_id=user_id, count=0)['count']
+    while mes_offset <= mes_count:
+        history = api.messages.getHistory(user_id=user_id, count=200, offset=mes_offset)['items']
+        for message in history:
+            print("[%s] " % (datetime.datetime.fromtimestamp(message['date'])).strftime('%Y-%m-%d %H:%M:%S'), end='')
+            if message['from_id'] == my_user_id:
+                print('%s: %s' % (my_user_name, message['body']))
+            else:
+                print('%s: %s' % (user_name, message['body']))
+            if 'attachments' in message:
+                for att in message['attachments']:
+                    if att['type'] == 'sticker':
+                        print('Attachment sticker: %d' % att['sticker']['product_id'])
+                    if att['type'] == 'photo':
+                        print('Attachment photo: ')
+                        for key in att['photo']:
+                            if 'photo' in key:
+                                print(key, att['photo'][key])
+                    # TODO: Add another attachments
 
-        if 'fwd_messages' in message:
-            print("Forwarded messages:")
-            do_fwd(message['fwd_messages'])
+            if 'fwd_messages' in message:
+                print("Forwarded messages:")
+                do_fwd(message['fwd_messages'])
 
-    sleep(0.25)
-    mes_offset += 200
+        sleep(1 / 3)
+        mes_offset += 200
+
+except VkAPIError:
+    pass
+    # TODO: do smth
