@@ -1,7 +1,8 @@
 # coding: utf-8
 
-# TODO: Store user_id in list
-# TODO: Hold timeout vk api exception ???
+# TODO: Store user_ids in list
+# TODO: Hold a timeout vk api exception ???
+# TODO: Wrap all functionality to work with the forwarded messages like with a single message (attachments etc)
 
 import configparser as cp
 import vk
@@ -20,7 +21,7 @@ api = vk.API(session, v='5.62', lang='ru', timeout=10)
 def do_fwd(forwarded, iter_count=1):
     sleep(1 / 3)
     iter_count += 1
-    # TODO: move to function
+    # TODO: Move to function
     fwd_ids = set()
     for fwd in forwarded:
         fwd_ids.add(fwd['user_id'])
@@ -39,7 +40,7 @@ def do_fwd(forwarded, iter_count=1):
 
 my_user = api.users.get()
 my_user_id = my_user[0]['id']
-my_user_name = my_user[0]['first_name'] + ' ' + my_user[0]['last_name']
+my_user_name = " ".join([my_user[0]['first_name'], my_user[0]['last_name']])
 
 try:
     dialogs = api.execute.getNamedDialogs()
@@ -51,7 +52,7 @@ try:
 
     user_n = int(input("Enter the dialog number: ")) - 1
     user_id = dialogs[user_n]['user_id']
-    user_name = " ".join([dialogs[user_n]['first_name'] + ' ' + dialogs[user_n]['last_name']])
+    user_name = " ".join([dialogs[user_n]['first_name'], dialogs[user_n]['last_name']])
 
     mes_offset = 0
     mes_count = api.messages.getHistory(user_id=user_id, count=0)['count']
@@ -83,4 +84,4 @@ try:
 
 except VkAPIError:
     pass
-    # TODO: do smth
+    # TODO: Do smth
